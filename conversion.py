@@ -13,6 +13,6 @@ def dec_to_bin(dec,n):
         bin+=str(dec%2)
         dec//=2
     bin=bin[::-1]
-    if len(bin<n):
+    if len(bin)<n:
         bin=((n-bin)*"0")+bin
     return bin
