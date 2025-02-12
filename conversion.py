@@ -7,9 +7,12 @@ def bin_to_dec(bin):
         j+=1
     return dec
 
-def dec_to_bin(dec):
+def dec_to_bin(dec,n):
     bin=""
     while dec!=0:
         bin+=str(dec%2)
         dec//=2
-    return bin[::-1]
+    bin=bin[::-1]
+    if len(bin<n):
+        bin=((n-bin)*"0")+bin
+    return bin
