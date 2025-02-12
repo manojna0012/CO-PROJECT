@@ -14,5 +14,5 @@ def dec_to_bin(dec,n):
         dec//=2
     bin=bin[::-1]
     if len(bin)<n:
-        bin=((n-bin)*"0")+bin
+        bin=((n-len(bin))*"0")+bin
     return bin
