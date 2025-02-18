@@ -131,8 +131,13 @@ register_encoding = {
     "r31": "11111"
 }
 
+
+
+
 def bin_str(num):                
     return bin(num)[2:]   
+
+
 
 
 def Immediate(n,b):
@@ -153,3 +158,27 @@ def Immediate(n,b):
         binary = binary[-b:]
         
     return binary
+
+
+
+
+def get_get(line):
+    s = ''
+    for i in range(len(line)):
+        if i == 0:
+            if line[i] in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_":
+                s += line[i]
+            else:
+                return None
+                break
+        else:
+            if line[i] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz_":
+                s += line[i]
+                continue
+            elif line[i] == ':':
+                return s
+                break
+            else:
+                return None
+                break
+    return None
