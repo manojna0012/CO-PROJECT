@@ -137,13 +137,16 @@ def Immediate(n,b):
     if n >=0:
         binary = bin(n)[2:]
     else:
-        binary = bin(n & int("1" * (n.bit_length() + 1), 2))[2:]
+        a= int("1" * (n.bit_length() + 1)
+        binary = bin(n & a, 2))[2:]
    
     if len(binary) < b:
         if n >= 0:
-            binary = '0' * (b - len(binary)) + binary
-        else:                                                                       
-            binary = '1' * (b - len(binary)) + binary
+            a0= b - len(binary)
+            binary = '0' * a0 + binary
+        else:
+            a1= b - len(binary)
+            binary = '1' * a1 + binary
     elif len(binary) > b:
         binary = binary[-b:]
         
