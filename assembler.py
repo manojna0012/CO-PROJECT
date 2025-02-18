@@ -131,14 +131,8 @@ register_encoding = {
     "r31": "11111"
 }
 
-
-
-
 def bin_str(num):                
     return bin(num)[2:]   
-
-
-
 
 def immediate(n,b):
     if n>=0:
@@ -157,9 +151,6 @@ def immediate(n,b):
     elif len(binary)>b:
         binary=binary[-b:]
     return binary
-
-
-
 
 def labels(line):
     l = ''
@@ -181,8 +172,6 @@ def labels(line):
                 return None
                 break
     return None
-
-
 
 input=[]
 with open("input.txt", 'r') as file:
