@@ -29,6 +29,8 @@ j_type_instructions = {
     "jal": {"opcode": "1101111","rd":"","imm":""},
 }
 
+instruction_types=[r_type_instructions,i_type_instructions,s_type_instructions,b_type_instructions,j_type_instructions]
+
 register_encoding = {
     "x0": "00000",
     "zero": "00000",
