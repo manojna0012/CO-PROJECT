@@ -179,3 +179,8 @@ with open("input.txt", 'r') as file:
 for i in range(len(x)):
     if input[i].endswith('\n')==True:
         input[i]=input[i][:-1]
+
+def Dectobin(decimal, totalbits):
+    if decimal < 0:
+        decimal = (1 << totalbits) + decimal  
+    return format(decimal & ((1 << totalbits) - 1), f'0{totalbits}b')  
