@@ -141,22 +141,21 @@ def bin_str(num):
 
 
 def immediate(n,b):
-    if n >=0:
-        binary = bin(n)[2:]
+    if n>=0:
+        binary=bin(n)[2:]
     else:
-        a= int("1" * (n.bit_length() + 1)
-        binary = bin(n & a, 2))[2:]
+        a=int("1"*(n.bit_length()+1)
+        binary=bin(n&a,2))[2:]
    
-    if len(binary) < b:
-        if n >= 0:
-            a0= b - len(binary)
-            binary = '0' * a0 + binary
+    if len(binary)<b:
+        if n>=0:
+            a0=b-len(binary)
+            binary='0'*a0+binary
         else:
-            a1= b - len(binary)
-            binary = '1' * a1 + binary
-    elif len(binary) > b:
-        binary = binary[-b:]
-        
+            a1=b-len(binary)
+            binary='1'*a1+binary
+    elif len(binary)>b:
+        binary=binary[-b:]
     return binary
 
 
