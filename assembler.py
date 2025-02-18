@@ -140,7 +140,7 @@ def bin_str(num):
 
 
 
-def Immediate(n,b):
+def immediate(n,b):
     if n >=0:
         binary = bin(n)[2:]
     else:
@@ -162,21 +162,21 @@ def Immediate(n,b):
 
 
 
-def get_get(line):
-    s = ''
+def labels(line):
+    l = ''
     for i in range(len(line)):
         if i == 0:
             if line[i] in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_":
-                s += line[i]
+                l += line[i]
             else:
                 return None
                 break
         else:
             if line[i] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz_":
-                s += line[i]
+                l += line[i]
                 continue
             elif line[i] == ':':
-                return s
+                return l
                 break
             else:
                 return None
