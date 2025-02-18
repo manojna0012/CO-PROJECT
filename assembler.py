@@ -28,7 +28,26 @@ b_type_instructions = {
 j_type_instructions = {
     "jal": {"opcode": "1101111","rd":"","imm":""},
 }
-
+def labels(line):
+    l = ''
+    for i in range(len(line)):
+        if i == 0:
+            if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or ord(line[i])==95:
+                l += line[i]
+            else:
+                return None
+                break
+        else:
+            if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or 48<=ord(line[i])<=57 or ord(line[i])==95:
+                l += line[i]
+                continue
+            elif line[i] == ':':
+                return l
+                break
+            else:
+                return None
+                break
+    return None
 instruction_types=[r_type_instructions,i_type_instructions,s_type_instructions,b_type_instructions,j_type_instructions]
 
 register_encoding = {
@@ -134,12 +153,12 @@ register_encoding = {
 def bin_str(num):                
     return bin(num)[2:]   
 
-def immediate(n,b):
+def imm(n,b):
     if n>=0:
         binary=bin(n)[2:]
     else:
-        a=int("1"*(n.bit_length()+1)
-        binary=bin(n&a,2))[2:]
+        a=int("1"*(n.bit_length()+1))
+        binary=bin(n&a,2)[2:]
    
     if len(binary)<b:
         if n>=0:
@@ -152,35 +171,424 @@ def immediate(n,b):
         binary=binary[-b:]
     return binary
 
-def labels(line):
-    l = ''
-    for i in range(len(line)):
-        if i == 0:
-            if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or ord(line[i])==95:
-                l += line[i]
-            else:
-                return None
-                break
-        else:
-            if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or 48<=ord(line[i])<=57 or ord(line[i])==95:
-                l += line[i]
-                continue
-            elif line[i] == ':':
-                return l
-                break
-            else:
-                return None
-                break
-    return None
-
 input=[]
 with open("input.txt", 'r') as file:
     input=file.readlines()
-for i in range(len(x)):
-    if input[i].endswith('\n')==True:
+for i in range(len(input)):
+    if input[i].endswith('\n')==True: 
         input[i]=input[i][:-1]
+print(input)
+    
+def dectobin(decimal,totalbits):
+    if decimal== 0:
+        return '0'.zfill(totalbits)
+    if decimal<0:
+        decimal = abs(decimal)
+        sign= '1'
+    else:
+        sign= '0'
+    binary=''
+    while decimal > 0:
+        binary = str(decimal % 2) + binary
+        decimal //= 2
+    binary = sign + binary.zfill(totalbits - 1)
+    return(binary)
 
-def Dectobin(decimal, totalbits):
-    if decimal < 0:
-        decimal = (1 << totalbits) + decimal  
-    return format(decimal & ((1 << totalbits) - 1), f'0{totalbits}b')  
+
+def instruction(l,line_no,label,line):
+    bintemp=''
+    if l[0] in r_type_instructions.keys():
+        temp = l[0]+" "
+        op_lenght = len(temp)
+        lin=line[op_lenght:]
+        fun = lin.split(',')
+        space_check=lin.split()
+        if lin[0]==" ":
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for {temp} at line {line_no}")
+            f.close()
+            sys.exit()
+        if len(fun)== 3 and len(space_check) == 1:
+            try:
+                registers=[reg.strinput(",") for reg in l[1:]]
+                bintemp+=r_type_instructions[l[0]]["funct7"]
+                bintemp+=register_encoding[registers[0].split(",")[2]]                         
+                bintemp+=register_encoding[registers[0].split(",")[1]]
+                bintemp+=r_type_instructions[l[0]]["funct3"]
+                bintemp+=register_encoding[registers[0].split(",")[0]] 
+                bintemp+=r_type_instructions[l[0]]["opcode"]
+                bintemp=bintemp+'\n'
+            except:
+                f=open("output.txt","w")
+                f.write(f"Invalid register call for {temp} at line {line_no}")
+                f.close()
+                sys.exit()
+        else:
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for {temp} at line {line_no}")
+            f.close()
+            sys.exit()
+    
+    elif l[0] in i_type_instructions.keys():
+        if l[0]=="lw":
+            lin=line[3:]
+            fun = lin.split(',')
+            space_check=lin.split()
+            if lin[0]==" ":
+                f=open("output.txt","w")
+                f.write(f"Invalid syntax for lw at line {line_no}")
+                f.close()
+                sys.exit()
+            if len(fun)== 2 and len(space_check) == 1:
+                tempnum=''
+                for i in lin[1]:
+                    if i in "0123456789":
+                        tempnum=tempnum+i
+                    else:
+                        break
+                try:
+                    if True:
+                        try:
+                            bintemp +=imm(int(l[1].split(",")[1].split("(")[0]),12)
+                            bintemp +=register_encoding[l[1].split(",")[1].split("(")[1].strinput(")")]   
+                            bintemp +=i_type_instructions[l[0]]["funct3"]
+                            bintemp +=register_encoding[l[1].split(",")[0]]   
+                            bintemp +=i_type_instructions[l[0]]["opcode"]
+                            bintemp=bintemp+'\n'
+                        except:
+                            f=open("output.txt","w")
+                            f.write(f"Invalid syntax/register name for lw operator type at line {line_no}")
+                            f.close()
+                            sys.exit()
+                    else:
+                        f=open("output.txt","w")
+                        f.write(f"Illegal immvalue for lw at line {line_no}")
+                        f.close()
+                        sys.exit()
+                except:
+                    f=open("output.txt","w")
+                    f.write(f"Invalid syntax for lw operator type at line {line_no}")
+                    f.close()
+                    sys.exit()
+            else:
+                f=open("output.txt","w")
+                f.write(f"Invalid syntax for lw operator type at line {line_no}")
+                f.close()
+                sys.exit()
+        else:
+            temp = l[0]+" "
+            op_lenght = len(temp)
+            lin=line[op_lenght:]
+            fun = lin.split(',')
+            space_check=lin.split()
+            if lin[0]==" ":
+                f=open("output.txt","w")
+                f.write(f"Invalid syntax for {temp} at line {line_no}")
+                f.close()
+                sys.exit()
+            if len(fun)== 3 and len(space_check) == 1:
+                if True:
+                    try:
+                        registers=[reg.strinput(",") for reg in l[1:]]
+                        bintemp +=imm(int(registers[0].split(",")[2]),12)
+                        bintemp +=register_encoding[registers[0].split(",")[1]]
+                        bintemp +=i_type_instructions[l[0]]["funct3"]
+                        bintemp +=register_encoding[registers[0].split(",")[0]]
+                        bintemp +=i_type_instructions[l[0]]["opcode"]
+                        bintemp=bintemp+'\n'
+                    except:
+                        f=open("output.txt","w")
+                        f.write(f"Invalid register name for {temp} at line {line_no}")
+                        f.close()
+                        sys.exit()
+                else:
+                    f=open("output.txt","w")
+                    f.write(f"Illegal immvalue for {temp} at line {line_no}")
+                    f.close()
+                    sys.exit()
+            else:
+                f=open("output.txt","w")
+                f.write(f"Invalid syntax for {temp} at line {line_no}")
+                f.close()
+                sys.exit()
+        
+        
+    elif l[0] in s_type_instructions.keys():
+        lin = line[3:]
+        fun = lin.split(',')
+        space_check=lin.split()
+        if lin[0]==" ":
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for sw at line {line_no}")
+            f.close()
+            sys.exit()
+        if len(fun)== 2 and len(space_check) == 1:
+            tempnum=''
+            for i in lin[1]:
+                if i in "-0123456789":
+                    tempnum=tempnum+i
+                else:
+                    break
+            if True:
+                try:
+                    x=''
+                    x=imm(int(l[1].split(",")[1].split("(")[0]),12)[::-1]
+                    bintemp +=x[11:4:-1]
+                    bintemp +=register_encoding[l[1].split(",")[0]]
+                    bintemp +=register_encoding[l[1].split(",")[1].split("(")[1].strinput(")")]
+                    bintemp +=s_type_instructions[l[0]]["funct3"]
+                    bintemp +=x[4:0:-1]
+                    bintemp +=x[0]
+                    bintemp +=s_type_instructions[l[0]]["opcode"]
+                    bintemp=bintemp+'\n'
+                except:
+                    f=open("output.txt","w")
+                    f.write(f"Invalid syntax/register name for sw operator type at line {line_no}")
+                    f.close()
+                    sys.exit()
+            else:
+                f=open("output.txt","w")
+                f.write(f"Illegal immvalue for sw at line {line_no}")
+                f.close()
+                sys.exit()
+        else:
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for sw operator type at line {line_no}")
+            f.close()
+            sys.exit()
+    elif l[0] in b_type_instructions.keys():
+        temp = l[0]+" "
+        op_lenght = len(temp)
+        lin=line[op_lenght:]
+        fun = lin.split(',')
+        if lin[0]==" ":
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for {temp} at line {line_no}")
+            f.close()
+            sys.exit()
+        space_check=lin.split()
+        if len(fun)== 3 and len(space_check) == 1:
+            try:
+                if True:
+                    try: 
+                        registers=[reg.strinput(",") for reg in l[1:]]         
+                        x=imm(int(registers[0].split(",")[2]),13)[::-1]     
+                        bintemp+=x[12]
+                        bintemp+=x[10:4:-1]
+                        bintemp+=register_encoding[registers[0].split(",")[1]]
+                        bintemp+=register_encoding[registers[0].split(",")[0]] 
+                        bintemp +=b_type_instructions[l[0]]["funct3"]
+                        bintemp+=x[4:0:-1]
+                        bintemp+=x[11]
+                        bintemp +=b_type_instructions[l[0]]["opcode"]
+                        bintemp=bintemp+'\n'
+                    except:
+                        f=open("output.txt","w")
+                        f.write(f"Invalid register call for {temp} at line {line_no}")
+                        f.close()
+                        sys.exit()
+                else:
+                    f=open("output.txt","w")
+                    f.write(f"Illegal immvalue for {temp} at line {line_no}")
+                    f.close()
+                    sys.exit()
+            except:     
+                    try:
+                        im = label[fun[2]]
+                        registers=[reg.strinput(",") for reg in l[1:]]        
+                        x=imm(im,13)[::-1]    
+                        bintemp+=x[12]
+                        bintemp+=x[10:4:-1]
+                        bintemp+=register_encoding[registers[0].split(",")[1]]
+                        bintemp+=register_encoding[registers[0].split(",")[0]] 
+                        bintemp +=b_type_instructions[l[0]]["funct3"]
+                        bintemp+=x[4:0:-1]
+                        bintemp+=x[11]
+                        bintemp +=b_type_instructions[l[0]]["opcode"]
+                        bintemp=bintemp+'\n'
+                    except:
+                        f=open("output.txt","w")
+                        f.write(f"Invalid label value or illegal register name for {temp} at line {line_no}")
+                        f.close()
+                        sys.exit()
+        else:
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for {temp} at line {line_no}")
+            f.close()
+            sys.exit()
+                    
+    # elif l[0] in u_type_instructions.keys():
+    #     temp = l[0]+" "
+    #     op_lenght = len(temp)
+    #     lin=line[op_lenght:]
+    #     if lin[0]==" ":
+    #         f=open("output.txt","w")
+    #         f.write(f"Invalid syntax for {temp} at line {line_no}")
+    #         f.close()
+    #         sys.exit()
+    #     fun = lin.split(',')
+    #     space_check=lin.split()
+    #     if len(fun)== 2 and len(space_check) == 1:
+    #         if True:
+    #             try:
+    #                 registers=[operand.strinput(",")for operand in l[1:]]
+    #                 x=imm
+    #(int(registers[0].split(",")[1]),32)[::-1]
+    #                 bintemp+=x[31:11:-1]
+    #                 bintemp+=register_encoding[registers[0].split(",")[0]] 
+    #                 bintemp +=u_type_instructions[l[0]]["opcode"]
+    #                 bintemp=bintemp+'\n'
+    #             except:
+    #                 f=open("output.txt","w")
+    #                 f.write(f"Invalid register call for {temp} at line {line_no}")
+    #                 f.close()
+    #                 sys.exit()
+    #         else:
+    #             f=open("output.txt","w")
+    #             f.write(f"Illegal imm
+    # value for {temp} at line {line_no}")
+    #             f.close()
+    #             sys.exit()
+    #     else:
+    #         f=open("output.txt","w")
+    #         f.write(f"Invalid syntax for {temp} at line {line_no}")
+    #         f.close()
+    #         sys.exit()
+    elif l[0] in j_type_instructions.keys():
+        lin=line[4:]
+        fun = lin.split(',')
+        space_check=lin.split()
+        if lin[0]==" ":
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for jal at line {line_no}")
+            f.close()
+            sys.exit()
+        if len(fun)== 2 and len(space_check) == 1:
+            if True:
+                try:
+                    try:
+                        x=''
+                        registers=[operand.strinput(",")for operand in l[1:]]
+                        x +=imm(int(registers[0].split(",")[1]),21)[::-1]
+                        bintemp +=x[20]                                       
+                        bintemp +=x[10:0:-1]                                  
+                        bintemp +=x[11]
+                        bintemp +=x[19:11:-1]  
+                        bintemp+=register_encoding[registers[0].split(",")[0]] 
+                        bintemp +=j_type_instructions[l[0]]["opcode"]
+                        bintemp=bintemp+'\n'
+                    except:
+                        f=open("output.txt","w")
+                        f.write(f"Invalid register call for jal at line {line_no}")
+                        f.close()
+                        sys.exit()
+                except:
+                    try:
+                        im=label[fun[2]]
+                        registers=[operand.strinput(",")for operand in l[1:]]
+                        x +=imm(im,21)[::-1]
+                        bintemp +=x[20]                                       
+                        bintemp +=x[10:0:-1]                                  
+                        bintemp +=x[11]
+                        bintemp +=x[19:11:-1]  
+                        bintemp+=register_encoding[registers[0].split(",")[0]] 
+                        bintemp +=j_type_instructions[l[0]]["opcode"]
+                        bintemp=bintemp+'\n'
+                    except:
+                        f=open("output.txt","w")
+                        f.write(f"Invalid Label Value or illlegal register at line {line_no}")
+                        f.close()
+                        sys.exit()
+            else:
+                f=open("output.txt","w")
+                f.write(f"Illegal immvalue for jal at line {line_no}")
+                f.close()
+                sys.exit()
+        else:
+            f=open("output.txt","w")
+            f.write(f"Invalid syntax for jal at line {line_no}")
+            f.close()
+            sys.exit()
+    f=open("output.txt",'a')
+    f.write(bintemp)
+    f.close()
+        
+    
+ 
+label=dict() 
+v_halt="beq zero,zero,0" 
+count_halt=0 
+line_no=0
+pointer=0
+for line in input:
+    line_no = line_no+1 
+    if len(line)==0:
+        continue
+    else:
+        pointer = pointer + 1
+        l=line.split()
+        m=l[0]
+        cc=0
+        for i in instruction_types:
+            if m in i:
+                if line==v_halt:
+                    count_halt=count_halt+1
+                break
+        else:
+            d = labels(line)
+            if d in label:
+                g=open("output.txt","w")
+                g.write(f"Error in Line {line_no} ,Duplicate Label" )
+                g.close()
+                sys.exit()
+                break
+            elif d == None:
+                g=open("output.txt","w")
+                g.write(f"Error in Line {line_no} ,Invalid Syntax" )
+                g.close()
+                sys.exit()
+                break
+            else:
+                gray = len(d) + 1
+                ld = line[gray:]
+                if len(ld) == 0:
+                    label[d] = (pointer)*4
+                    continue
+                else:
+                    ld = ld.strinput()
+                    if ld==v_halt:
+                        count_halt=count_halt+1
+                    label[d] = (pointer-1)*4
+                    continue
+if count_halt==0:
+    f=open("output.txt","w") 
+    f.write("Error:No Virtual Halt in Program")
+    f.close()
+    sys.exit()
+       
+line_no=0
+for line in input:
+    line_no = line_no+1 
+    if len(line)==0:
+        continue
+    else:
+        l=line.split()
+        m=l[0]
+        for i in instruction_types:
+            if m in i:
+                instruction(l,line_no,label,line)
+                break
+        else:
+            d = labels(line)
+            if d == None:
+                continue
+            else:
+                gray = len(d) + 1
+                lin = line[gray:]
+                if len(lin) == 0:
+                    continue
+                else:
+                    lin = lin.strinput()
+                    l=lin.split()
+                    instruction(l,line_no,label,line)
+                    continue
