@@ -182,3 +182,12 @@ def labels(line):
                 return None
                 break
     return None
+
+
+
+input=[]
+with open("input.txt", 'r') as file:
+    input=file.readlines()
+for i in range(len(x)):
+    if input[i].endswith('\n')==True:
+        input[i]=input[i][:-1]
