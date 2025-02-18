@@ -177,7 +177,6 @@ with open("input.txt", 'r') as file:
 for i in range(len(input)):
     if input[i].endswith('\n')==True: 
         input[i]=input[i][:-1]
-print(input)
     
 def dectobin(decimal,totalbits):
     if decimal== 0:
@@ -210,7 +209,7 @@ def instruction(l,line_no,label,line):
             sys.exit()
         if len(fun)== 3 and len(space_check) == 1:
             try:
-                registers=[reg.strinput(",") for reg in l[1:]]
+                registers=[reg.strip(",") for reg in l[1:]]
                 bintemp+=r_type_instructions[l[0]]["funct7"]
                 bintemp+=register_encoding[registers[0].split(",")[2]]                         
                 bintemp+=register_encoding[registers[0].split(",")[1]]
@@ -250,7 +249,7 @@ def instruction(l,line_no,label,line):
                     if True:
                         try:
                             bintemp +=imm(int(l[1].split(",")[1].split("(")[0]),12)
-                            bintemp +=register_encoding[l[1].split(",")[1].split("(")[1].strinput(")")]   
+                            bintemp +=register_encoding[l[1].split(",")[1].split("(")[1].strip(")")]   
                             bintemp +=i_type_instructions[l[0]]["funct3"]
                             bintemp +=register_encoding[l[1].split(",")[0]]   
                             bintemp +=i_type_instructions[l[0]]["opcode"]
@@ -289,7 +288,7 @@ def instruction(l,line_no,label,line):
             if len(fun)== 3 and len(space_check) == 1:
                 if True:
                     try:
-                        registers=[reg.strinput(",") for reg in l[1:]]
+                        registers=[reg.strip(",") for reg in l[1:]]
                         bintemp +=imm(int(registers[0].split(",")[2]),12)
                         bintemp +=register_encoding[registers[0].split(",")[1]]
                         bintemp +=i_type_instructions[l[0]]["funct3"]
@@ -335,7 +334,7 @@ def instruction(l,line_no,label,line):
                     x=imm(int(l[1].split(",")[1].split("(")[0]),12)[::-1]
                     bintemp +=x[11:4:-1]
                     bintemp +=register_encoding[l[1].split(",")[0]]
-                    bintemp +=register_encoding[l[1].split(",")[1].split("(")[1].strinput(")")]
+                    bintemp +=register_encoding[l[1].split(",")[1].split("(")[1].strip(")")]
                     bintemp +=s_type_instructions[l[0]]["funct3"]
                     bintemp +=x[4:0:-1]
                     bintemp +=x[0]
@@ -371,7 +370,7 @@ def instruction(l,line_no,label,line):
             try:
                 if True:
                     try: 
-                        registers=[reg.strinput(",") for reg in l[1:]]         
+                        registers=[reg.strip(",") for reg in l[1:]]         
                         x=imm(int(registers[0].split(",")[2]),13)[::-1]     
                         bintemp+=x[12]
                         bintemp+=x[10:4:-1]
@@ -395,7 +394,7 @@ def instruction(l,line_no,label,line):
             except:     
                     try:
                         im = label[fun[2]]
-                        registers=[reg.strinput(",") for reg in l[1:]]        
+                        registers=[reg.strip(",") for reg in l[1:]]        
                         x=imm(im,13)[::-1]    
                         bintemp+=x[12]
                         bintemp+=x[10:4:-1]
@@ -431,7 +430,7 @@ def instruction(l,line_no,label,line):
     #     if len(fun)== 2 and len(space_check) == 1:
     #         if True:
     #             try:
-    #                 registers=[operand.strinput(",")for operand in l[1:]]
+    #                 registers=[operand.strip(",")for operand in l[1:]]
     #                 x=imm
     #(int(registers[0].split(",")[1]),32)[::-1]
     #                 bintemp+=x[31:11:-1]
@@ -468,7 +467,7 @@ def instruction(l,line_no,label,line):
                 try:
                     try:
                         x=''
-                        registers=[operand.strinput(",")for operand in l[1:]]
+                        registers=[operand.strip(",")for operand in l[1:]]
                         x +=imm(int(registers[0].split(",")[1]),21)[::-1]
                         bintemp +=x[20]                                       
                         bintemp +=x[10:0:-1]                                  
@@ -485,7 +484,7 @@ def instruction(l,line_no,label,line):
                 except:
                     try:
                         im=label[fun[2]]
-                        registers=[operand.strinput(",")for operand in l[1:]]
+                        registers=[operand.strip(",")for operand in l[1:]]
                         x +=imm(im,21)[::-1]
                         bintemp +=x[20]                                       
                         bintemp +=x[10:0:-1]                                  
@@ -555,7 +554,7 @@ for line in input:
                     label[d] = (pointer)*4
                     continue
                 else:
-                    ld = ld.strinput()
+                    ld = ld.strip()
                     if ld==v_halt:
                         count_halt=count_halt+1
                     label[d] = (pointer-1)*4
@@ -588,7 +587,7 @@ for line in input:
                 if len(lin) == 0:
                     continue
                 else:
-                    lin = lin.strinput()
+                    lin = lin.strip()
                     l=lin.split()
                     instruction(l,line_no,label,line)
                     continue
