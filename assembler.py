@@ -156,13 +156,13 @@ def labels(line):
     l = ''
     for i in range(len(line)):
         if i == 0:
-             97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or ord(line[i])==95:
+            if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or ord(line[i])==95:
                 l += line[i]
             else:
                 return None
                 break
         else:
-             if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or 48<=ord(line[i])<=57 or ord(line[i])==95:
+            if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or 48<=ord(line[i])<=57 or ord(line[i])==95:
                 l += line[i]
                 continue
             elif line[i] == ':':
