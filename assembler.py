@@ -609,6 +609,10 @@ b_type_instructions = {
 j_type_instructions = {
     "jal": {"opcode": "1101111","rd":"","imm":""},
 }
+u_type_instructions = {
+    "lui": {"opcode": "0110111","rd":"","imm":""},
+    "auipc": {"opcode": "0010111","rd":"","imm":""},
+}
 def labels(line):
     l=""
     for i in range(len(line)):
@@ -626,7 +630,7 @@ def labels(line):
             else:
                 return
     return
-instruction_types=[r_type_instructions,i_type_instructions,s_type_instructions,b_type_instructions,j_type_instructions]
+instruction_types=[r_type_instructions,i_type_instructions,s_type_instructions,b_type_instructions,j_type_instructions,u_type_instructions]
 
 register_encoding = {
     "x0": "00000",
@@ -747,7 +751,7 @@ def imm(n,b):
     return binary
 
 input=[]
-with open("Ex_test_1.txt", 'r') as file:
+with open("t.txt", 'r') as file:
     input=file.readlines()
 for i in range(len(input)):
     if input[i].endswith('\n')==True: 
@@ -1055,7 +1059,51 @@ def j_type(l,line_no,line,label):
         f.close()
         sys.exit()
     return bintemp
-    
+
+def u_type(l, line_no, line):
+    """
+    Processes U-type (Upper Immediate) instructions in RISC-V assembly.
+    Example: lui x5, 7
+    """
+
+    bintemp = ''
+    instruction_name = l[0]  
+    op_length = len(instruction_name) + 1  
+    lin = line[op_length:].strip()  
+    fun = [operand.strip() for operand in lin.split(',')]
+    if len(fun) != 2:
+        with open("output.txt", "a") as f:
+            f.write(f"Invalid syntax for {instruction_name} at line {line_no}\n")
+        sys.exit()
+    try:
+        destination_reg = fun[0] 
+        immediate_value = int(fun[1]) 
+        if not (-(2*19) <= immediate_value < (2*20)):
+            with open("output.txt", "a") as f:
+                f.write(f"Immediate value out of range for {instruction_name} at line {line_no}\n")
+            sys.exit()
+        imm_bin = format(immediate_value & 0xFFFFF000, '032b') 
+        bintemp += imm_bin[:20] 
+        if destination_reg not in register_encoding:
+            with open("output.txt", "a") as f:
+                f.write(f"Invalid register {destination_reg} at line {line_no}\n")
+            sys.exit()
+        bintemp += register_encoding[destination_reg]
+        if instruction_name not in u_type_instructions:
+            with open("output.txt", "a") as f:
+                f.write(f"Unknown instruction {instruction_name} at line {line_no}\n")
+            sys.exit()
+        bintemp += u_type_instructions[instruction_name]["opcode"]
+        bintemp += '\n'
+        with open("output.txt", "a") as f:
+            f.write(bintemp)
+
+    except ValueError:
+        with open("output.txt", "a") as f:
+            f.write(f"Invalid immediate value for {instruction_name} at line {line_no}\n")
+        sys.exit()
+    return bintemp
+
 def instruction(l,line_no,label,line):
     if l[0] in r_type_instructions.keys():
         bintemp=r_type(l,line_no,line)
@@ -1071,6 +1119,9 @@ def instruction(l,line_no,label,line):
                     
     elif l[0] in j_type_instructions.keys():
         bintemp=j_type(l,line_no,line) 
+    
+    elif l[0] in u_type_instructions.keys():
+        bintemp=u_type(l,line_no,line)
     
     with open("output.txt",'a') as f:
         f.write(bintemp)
