@@ -34,7 +34,7 @@ def labels(line):
         if i==0:
             if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or ord(line[i])==95:
                 l+=line[i]
-            else:#if the character is invalid, return ""
+            else:
                 return
         else:
             if 97<=ord(line[i])<=122 or 65<=ord(line[i])<=90 or 48<=ord(line[i])<=57 or ord(line[i])==95:
@@ -152,44 +152,41 @@ def imm(n,b):
         binary=bin(n)[2:]
     else:
         a=int("1"*(n.bit_length()+1))#if the immediate is negative, take 2's complement
-        binary=bin(n&a)[2:]
+        binary=bin(n&a,2)[2:]
+   
     if len(binary)<b:
         if n>=0:
             a0=b-len(binary)
-            binary="0"*a0+binary
+            binary='0'*a0+binary
         else:
             a1=b-len(binary)
-            binary="1"*a1+binary
+            binary='1'*a1+binary
     elif len(binary)>b:
         binary=binary[-b:]
     return binary
 
 input=[]
-with open("input.txt", 'r') as file:
+with open("Ex_test_2.txt", 'r') as file:
     input=file.readlines()
 for i in range(len(input)):
     if input[i].endswith('\n')==True: 
         input[i]=input[i][:-1]
     
-def dectobin(n,totalbits):
-    if totalbits<0:
-        print("total bits cannot be negative.")
-    if n>=0:
-        bin=""
-        while n!=0:
-            bin+=str(n%2)
-            n//=2
-        bin=bin[::-1]
-        bin=bin.zfill(totalbits)
+def dectobin(decimal,totalbits):
+    if decimal== 0:
+        return '0'.zfill(totalbits)
+    if decimal<0:
+        decimal = abs(decimal)
+        sign= '1'
     else:
-        bin=""
-        n=-(n)
-        while n!=0:
-            bin+=str(n%2)
-            n//=2
-        bin=bin[::-1]
-        bin="1"+bin.zfill(totalbits-1)
-    return bin
+        sign= '0'
+    binary=''
+    while decimal > 0:
+        binary = str(decimal % 2) + binary
+        decimal //= 2
+    binary = sign + binary.zfill(totalbits - 1)
+    return(binary)
+
 
 def r_type(l,line_no,line):
     bintemp=""
@@ -256,11 +253,11 @@ def i_type(l,line_no,line):
                         f.write(f"Invalid syntax/register name for lw operator type at line {line_no}")
                         f.close()
                         sys.exit()
-                # else:
-                #     f=open("output.txt","w")
-                #     f.write(f"Illegal imm value for lw at line {line_no}")
-                #     f.close()
-                #     sys.exit()
+                else:
+                    f=open("output.txt","w")
+                    f.write(f"Illegal imm value for lw at line {line_no}")
+                    f.close()
+                    sys.exit()
             except:
                 f=open("output.txt","w")
                 f.write(f"Invalid syntax for lw operator type at line {line_no}")
@@ -297,11 +294,11 @@ def i_type(l,line_no,line):
                     f.write(f"Invalid register name for {temp} at line {line_no}")
                     f.close()
                     sys.exit()
-            # else:
-            #     f=open("output.txt","w")
-            #     f.write(f"Illegal imm value for {temp} at line {line_no}")
-            #     f.close()
-            #     sys.exit()
+            else:
+                f=open("output.txt","w")
+                f.write(f"Illegal imm value for {temp} at line {line_no}")
+                f.close()
+                sys.exit()
         else:
             f=open("output.txt","w")
             f.write(f"Invalid syntax for {temp} at line {line_no}")
@@ -343,11 +340,11 @@ def s_type(l,line_no,line):
                 f.write(f"Invalid syntax/register name for sw operator type at line {line_no}")
                 f.close()
                 sys.exit()
-        # else:
-        #     f=open("output.txt","w")
-        #     f.write(f"Illegal immvalue for sw at line {line_no}")
-        #     f.close()
-        #     sys.exit()
+        else:
+            f=open("output.txt","w")
+            f.write(f"Illegal immvalue for sw at line {line_no}")
+            f.close()
+            sys.exit()
     else:
         f=open("output.txt","w")
         f.write(f"Invalid syntax for sw operator type at line {line_no}")
@@ -387,11 +384,11 @@ def b_type(l,line_no,label,line):
                     f.write(f"Invalid register call for {temp} at line {line_no}")
                     f.close()
                     sys.exit()
-            # else:
-            #     f=open("output.txt","w")
-            #     f.write(f"Illegal immvalue for {temp} at line {line_no}")
-            #     f.close()
-            #     sys.exit()
+            else:
+                f=open("output.txt","w")
+                f.write(f"Illegal immvalue for {temp} at line {line_no}")
+                f.close()
+                sys.exit()
         except:     
                 try:
                     im = label[fun[2]]
@@ -464,12 +461,13 @@ def j_type(l,line_no,line):
                     f.write(f"Invalid Label Value or illlegal register at line {line_no}")
                     f.close()
                     sys.exit()
-        # else:
-        #     f=open("output.txt","w")
-        #     f.write(f"Illegal immvalue for jal at line {line_no}")
-        #     f.close()
-        #     sys.exit()
+        else:
+            f=open("output.txt","w")
+            f.write(f"Illegal immvalue for jal at line {line_no}")
+            f.close()
+            sys.exit()
     else:
+        #print("hi")
         f=open("output.txt","w")
         f.write(f"Invalid syntax for jal at line {line_no}")
         f.close()
@@ -495,7 +493,8 @@ def instruction(l,line_no,label,line):
     with open("output.txt",'a') as f:
         f.write(bintemp)
  
-label={}
+label=dict() 
+v_halt="beq zero,zero,0" 
 count_halt=0 
 line_no=0
 pointer=0
@@ -510,12 +509,11 @@ for line in input:
         cc=0
         for i in instruction_types:
             if m in i:
-                if line=="beq zero,zero,0":
+                if line==v_halt:
                     count_halt=count_halt+1
                 break
         else:
             d = labels(line)
-            print(d)
             if d in label:
                 g=open("output.txt","w")
                 g.write(f"Error in Line {line_no} ,Duplicate Label" )
@@ -536,7 +534,7 @@ for line in input:
                     continue
                 else:
                     ld = ld.strip()
-                    if ld=="beq zero,zero,0":
+                    if ld==v_halt:
                         count_halt=count_halt+1
                     label[d] = (pointer-1)*4
                     continue
