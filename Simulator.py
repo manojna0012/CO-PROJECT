@@ -4,36 +4,53 @@ def file_read(file_name):
     for i in range(len(data)):
         data[i]=data[i].strip("\n")
     return data
-def twos_comp(n):
-    s=str(n)
-    snew=""
-    for i in s:
-        if i=="0":
-            snew+="1"
-        else: 
-            snew+="0"
-    sint=int(snew)
-    sint+=1
-    return sint
-def dec_to_bin(n):
-    s=""
-    if n==0:
-        return "0"
-    while n!=0:
-        s+=str(n%2)
-        n//=2
-    return s[::-1]
-def bin_to_dec(s):
+# def twos_comp(n):
+#     s=str(n)
+#     snew=""
+#     for i in s:
+#         if i=="0":
+#             snew+="1"
+#         else: 
+#             snew+="0"
+#     sint=int(snew)
+#     sint+=1
+#     return sint
+def hex_to_dec(s):
     n=0
     x=0
+    s=s[2:]
     s=s[::-1]
     for i in s:
-        n+=int(i)*((2)**x)
+        n+=int(i)*((16)**x)
         x+=1
     return n
+def sign_extend_to_32(binary):
+    """Extends an n-bit binary number to 32 bits using sign extension."""
+    n=len(binary)
+    if n>=32:
+        return binary
+    sign_bit=binary[0]  
+    extension=sign_bit*(32-n) 
+    ans=extension+binary 
+    return ans
+def bin_to_dec_unsigned(binary):
+    return int(binary, 2) 
+def bin_to_dec(binary):
+    n=len(binary)
+    if binary[0]=='1': 
+        decimal=int(binary, 2)-(1<<n) 
+    else:
+        decimal=int(binary, 2)
+    return decimal
+
+def dec_to_bin(decimal, bits=32):
+    """Converts a decimal number to an n-bit binary string with two's complement for negatives."""
+    if decimal<0:  
+        decimal=(1<<bits)+decimal  
+    return format(decimal, f'0{bits}b') 
 registers = { "00000" : 0,
               "00001" : 0,
-              "00010" : 0,
+              "00010" : 380,
               "00011" : 0, 
               "00100" : 0,
               "00101" : 0,
@@ -104,10 +121,10 @@ def r_type(line):
     func3 = line[17:20]
     #sub
     if func7=='0100000':
-        registers[rd]=registers[rs1]-registers[rs2]
+        registers[rd]=bin_to_dec_unsigned(dec_to_bin(registers[rs1]-registers[rs2]))
     #add
     elif func3=="000":
-        registers[rd]=registers[rs1]+registers[rs2]
+        registers[rd]=bin_to_dec_unsigned(dec_to_bin(registers[rs1]+registers[rs2]))
     #slt
     elif func3=="010":
         if registers[rs1]<registers[rs2]:
@@ -116,61 +133,85 @@ def r_type(line):
             registers[rd]=0
     #srl
     elif func3=="101":
-        x=bin_to_dec(str(int(dec_to_bin(registers[rs2]))%100000))
-        registers[rd]=registers[rs1]*(2**x)
+        x=dec_to_bin(registers[rs1])
+        registers[rd]=bin_to_dec_unsigned(("0"*registers[rs2])+x[:(-registers[rs2]-1)])
     #or
     elif func3=="110":
-        bin1=dec_to_bin(registers[rs1])
-        bin2=dec_to_bin(registers[rs2])
-        if len(bin1)>len(bin2):
-            bin2=("0"*(len(bin1)-len(bin2)))+bin2
-        else:
-            bin1=("0"*(len(bin2)-len(bin1)))+bin1
-        ans=""
-        for i in range(len(bin1)):
-            if bin1[i]=="1" or bin2[i]=="1":
-                ans+="1"
-            else:
-                ans+="0"
-        registers[rd]=bin_to_dec(ans)
+        registers[rd]=bin_to_dec_unsigned(dec_to_bin(registers[rs1] | registers[rs2]))
     #and
     elif func3=="111":
-        bin1=dec_to_bin(registers[rs1])
-        bin2=dec_to_bin(registers[rs2])
-        if len(bin1)>len(bin2):
-            bin2=("0"*(len(bin1)-len(bin2)))+bin2
-        else:
-            bin1=("0"*(len(bin2)-len(bin1)))+bin1
-        ans=""
-        for i in range(len(bin1)):
-            if bin1[i]=="1" and bin2[i]=="1":
-                ans+="1"
-            else:
-                ans+="0"
-        registers[rd]=bin_to_dec(ans)
+        registers[rd]=bin_to_dec_unsigned(dec_to_bin(registers[rs1] & registers[rs2]))
+    display(registers)
+
 def j_type(line,PC):
     rd=line[20:25]
     imm=bin_to_dec(line[0]+line[12:20]+line[11]+line[1:11]+"0")
-    temp=PC+1
+    temp=PC
+    registers[rd]=4*(temp)
     for i in memory:
         if temp==0:
             break
         temp-=1
-    registers[rd]=i#it is in hex!!!!!!!!!!!!!!!!!!!!!
-    PC+=imm/4
+    # registers[rd]=hex_to_dec(i)
+    PC+=imm//4
     # for i in memory:
     #     if PC==0:
     #         break
     #     PC-=1
+    display(registers)
     return PC
+
+def i_type(line):
+    opcode=line[25:32]
+    #opcode2=instr[-7:]
+    #print(opcode) # Last 7 bits (6:0)
+    rd=line[20:25] # Bits (11:7)
+    func3=line[17:20] # Bits (14:12)
+    rs1=line[12:17]         # Bits (19:15)
+    imm=line[0:12]
+    imm=sign_extend_to_32(imm)
+    decimm=bin_to_dec(imm)
+    #print(opcode)
+    #update registers
+    if func3=="000" and opcode=="0010011":
+        #PC=PC+4
+        ans=registers[rs1]+decimm
+        ans=dec_to_bin(ans)
+        registers[rd]=bin_to_dec_unsigned(ans)
+    elif func3=="010" and opcode=="0000011":
+        #PC=PC+4
+        ans=registers[rs1]+decimm
+        ans=dec_to_bin(ans)
+        registers[rd]=bin_to_dec_unsigned(ans)
+    elif opcode=="1100111":
+        print("((((((((((((((((((((()))))))))))))))))))))")
+    display(registers)
+
+def s_type(line):
+    return
+
+def b_type(line):
+    return
+
+
+
+
+
+
+def display(registers):
+    #print("PC:",PC)
+    for key in registers:
+        print(registers[key], end=" ")
+    print()
 def main():
     input_file="input.txt"
     lines=file_read(input_file)
-    PC=0
+    PC=1
     flag=0
     update=PC
     for line in lines:
         if line!="00000000000000000000000001100011" and flag==0:
+            print(PC*4,end=" ")
             PC+=1
             update+=1
             if line[25:]=="0110011":
@@ -178,10 +219,20 @@ def main():
             if line[25:]=="1101111":
                 update=j_type(line,PC)
                 flag=1
+            if line[25:]=="0010011" or line[25:]=="1100111" or line[25:]=="0000011":
+                i_type(line)
+            if line[25:]=="0100011":
+                s_type(line)
+            if line[25:]=="1100011":
+                b_type(line)
         elif line!="00000000000000000000000001100011" and flag==1:
+            print(PC*4,end=" ")
+            display(registers)
             PC+=1
         else:
             break
         if update==PC:
             flag=0
+    print((PC-1)*4,end=" ")
+    display(registers)
 main()
