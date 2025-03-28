@@ -21,7 +21,7 @@ def hex_to_dec(s):
     s=s[2:]
     s=s[::-1]
     for i in s:
-        n+=int(i)*((16)**x)
+        n+=int(i)((16)*x)
         x+=1
     return n
 def sign_extend_to_32(binary):
@@ -147,13 +147,13 @@ def j_type(line,PC):
     rd=line[20:25]
     imm=bin_to_dec(line[0]+line[12:20]+line[11]+line[1:11]+"0")
     temp=PC
-    registers[rd]=4*(temp)
+    registers[rd]=temp
     for i in memory:
         if temp==0:
             break
-        temp-=1
+        temp-=4
     # registers[rd]=hex_to_dec(i)
-    PC+=imm//4
+    PC+=imm
     # for i in memory:
     #     if PC==0:
     #         break
@@ -167,7 +167,7 @@ def i_type(line):
     #print(opcode) # Last 7 bits (6:0)
     rd=line[20:25] # Bits (11:7)
     func3=line[17:20] # Bits (14:12)
-    rs1=line[12:17]         # Bits (19:15)
+    rs1=line[12:17]       # Bits (19:15)
     imm=line[0:12]
     imm=sign_extend_to_32(imm)
     decimm=bin_to_dec(imm)
@@ -181,58 +181,79 @@ def i_type(line):
     elif func3=="010" and opcode=="0000011":
         #PC=PC+4
         ans=registers[rs1]+decimm
-        ans=dec_to_bin(ans)
-        registers[rd]=bin_to_dec_unsigned(ans)
+        ans= format(ans, '#010x').lower()
+        registers[rd]=memory.get(ans, 0)
     elif opcode=="1100111":
-        print("((((((((((((((((((((()))))))))))))))))))))")
+        pass
     display(registers)
 
 def s_type(line):
-    return
+    opcode = line[25:32]
+    func3 = line[17:20]
+    rs1 = line[12:17]
+    rs2 = line[7:12]
+    imm = line[0:7] + line[20:25]
+    imm = sign_extend_to_32(imm)
+    decimm = bin_to_dec(imm)
 
-def b_type(line):
-    return
+    if opcode == "0100011" and func3 =="010":  # sw instruction
+        address_dec= registers[rs1] + decimm
+        final_address= f"0x{(address_dec):08x}"
+        if int(final_address[-2])>7:
+            final_address=final_address[:-2]+str(int(final_address[-2])%8)+final_address[-1]
+        memory[final_address] = registers[rs2]
+    display(registers)
 
-
-
-
-
+def b_type(line,PC):
+    func=line[17:20]
+    rs1=line[12:17]
+    rs2=line[7:12]
+    imm=bin_to_dec(line[0]+line[24]+line[1:7]+line[20:24]+"0")
+    #beq
+    if func=="000" and registers[rs1]==registers[rs2]:
+        PC+=imm
+        PC-=4
+        print(PC,end=" ")
+    #bne
+    elif func=="001" and registers[rs1]!=registers[rs2]:
+        PC+=imm
+        PC-=4
+        print(PC,end=" ")
+    else:
+        print(PC,end=" ")
+    PC+=4
+    display(registers)
+    return PC
 
 def display(registers):
-    #print("PC:",PC)
     for key in registers:
         print(registers[key], end=" ")
     print()
+
 def main():
     input_file="input.txt"
     lines=file_read(input_file)
-    PC=1
-    flag=0
-    update=PC
-    for line in lines:
-        if line!="00000000000000000000000001100011" and flag==0:
-            print(PC*4,end=" ")
-            PC+=1
-            update+=1
-            if line[25:]=="0110011":
-                r_type(line)
-            if line[25:]=="1101111":
-                update=j_type(line,PC)
-                flag=1
-            if line[25:]=="0010011" or line[25:]=="1100111" or line[25:]=="0000011":
-                i_type(line)
-            if line[25:]=="0100011":
-                s_type(line)
-            if line[25:]=="1100011":
-                b_type(line)
-        elif line!="00000000000000000000000001100011" and flag==1:
-            print(PC*4,end=" ")
-            display(registers)
-            PC+=1
-        else:
-            break
-        if update==PC:
-            flag=0
-    print((PC-1)*4,end=" ")
+    PC=4
+    while(lines[(PC//4)-1]!="00000000000000000000000001100011"):
+        line=lines[(PC//4)-1]
+        if line[25:]!="1100011":
+            print(PC,end=" ")
+        line=lines[(PC//4)-1]
+        if line[25:]=="0110011":
+            r_type(line)
+            PC+=4
+        if line[25:]=="1101111":
+            PC=j_type(line,PC)
+        if line[25:]=="0010011" or line[25:]=="1100111" or line[25:]=="0000011":
+            i_type(line)
+            PC+=4
+        if line[25:]=="0100011":
+            s_type(line)
+            PC+=4
+        if line[25:]=="1100011":
+            PC=b_type(line,PC)
+    print(PC,end=" ")
     display(registers)
+    for i in memory:
+        print(i,":",memory[i])
 main()
