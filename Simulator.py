@@ -146,12 +146,13 @@ def r_type(line):
 def j_type(line,PC):
     rd=line[20:25]
     imm=bin_to_dec(line[0]+line[12:20]+line[11]+line[1:11]+"0")
-    temp=PC
-    registers[rd]=temp
-    for i in memory:
-        if temp==0:
-            break
-        temp-=4
+    registers[rd]=PC
+    # temp=PC
+    # registers[rd]=temp
+    # for i in memory:
+    #     if temp==0:
+    #         break
+    #     temp-=4
     # registers[rd]=hex_to_dec(i)
     PC+=imm
     # for i in memory:
@@ -234,6 +235,7 @@ def main():
     input_file="input.txt"
     lines=file_read(input_file)
     PC=4
+    flag=0
     while(lines[(PC//4)-1]!="00000000000000000000000001100011"):
         line=lines[(PC//4)-1]
         if line[25:]!="1100011":
@@ -243,7 +245,9 @@ def main():
             r_type(line)
             PC+=4
         if line[25:]=="1101111":
+            temp=PC+4
             PC=j_type(line,PC)
+            flag=1
         if line[25:]=="0010011" or line[25:]=="1100111" or line[25:]=="0000011":
             i_type(line)
             PC+=4
@@ -252,7 +256,10 @@ def main():
             PC+=4
         if line[25:]=="1100011":
             PC=b_type(line,PC)
-    print(PC,end=" ")
+        if flag==1:
+            flag=0
+            PC=temp
+    print(PC-4,end=" ")
     display(registers)
     for i in memory:
         print(i,":",memory[i])
