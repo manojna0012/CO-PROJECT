@@ -1,20 +1,13 @@
+import sys
+input_file=sys.argv[1]
+output_file=sys.argv[2]
 def file_read(file_name):
     with open (file_name,"r") as f:
         data=f.readlines()
     for i in range(len(data)):
         data[i]=data[i].strip("\n")
     return data
-# def twos_comp(n):
-#     s=str(n)
-#     snew=""
-#     for i in s:
-#         if i=="0":
-#             snew+="1"
-#         else: 
-#             snew+="0"
-#     sint=int(snew)
-#     sint+=1
-#     return sint
+
 def hex_to_dec(s):
     n=0
     x=0
@@ -24,6 +17,7 @@ def hex_to_dec(s):
         n+=int(i)((16)*x)
         x+=1
     return n
+
 def sign_extend_to_32(binary):
     """Extends an n-bit binary number to 32 bits using sign extension."""
     n=len(binary)
@@ -33,8 +27,10 @@ def sign_extend_to_32(binary):
     extension=sign_bit*(32-n) 
     ans=extension+binary 
     return ans
+
 def bin_to_dec_unsigned(binary):
     return int(binary, 2) 
+
 def bin_to_dec(binary):
     n=len(binary)
     if binary[0]=='1': 
@@ -48,6 +44,7 @@ def dec_to_bin(decimal, bits=32):
     if decimal<0:  
         decimal=(1<<bits)+decimal  
     return format(decimal, f'0{bits}b') 
+
 registers = { "00000" : 0,
               "00001" : 0,
               "00010" : 380,
@@ -80,40 +77,41 @@ registers = { "00000" : 0,
               "11101" : 0, 
               "11110" : 0, 
               "11111" : 0}
+
 memory = {"0x00010000" : 0,
           "0x00010004" : 0,
           "0x00010008" : 0, 
-          "0x0001000c" : 0,
+          "0x0001000C" : 0,
           "0x00010010" : 0,
           "0x00010014" : 0,
           "0x00010018" : 0, 
-          "0x0001001c" : 0,
+          "0x0001001C" : 0,
           "0x00010020" : 0,
           "0x00010024" : 0,
           "0x00010028" : 0, 
-          "0x0001002c" : 0,
+          "0x0001002C" : 0,
           "0x00010030" : 0,
           "0x00010034" : 0,
           "0x00010038" : 0, 
-          "0x0001003c" : 0,
+          "0x0001003C" : 0,
           "0x00010040" : 0,
           "0x00010044" : 0,
           "0x00010048" : 0, 
-          "0x0001004c" : 0,
+          "0x0001004C" : 0,
           "0x00010050" : 0,
           "0x00010054" : 0,
           "0x00010058" : 0, 
-          "0x0001005c" : 0,
+          "0x0001005C" : 0,
           "0x00010060" : 0,
           "0x00010064" : 0,
           "0x00010068" : 0, 
-          "0x0001006c" : 0,
+          "0x0001006C" : 0,
           "0x00010070" : 0,
           "0x00010074" : 0,
           "0x00010078" : 0, 
-          "0x0001007c" : 0 }
+          "0x0001007C" : 0 }
 
-def r_type(line):
+def r_type(line,PC,output_file):
     rd = line[20:25]
     rs1 = line[12:17]
     rs2 = line[7:12]
@@ -141,71 +139,65 @@ def r_type(line):
     #and
     elif func3=="111":
         registers[rd]=bin_to_dec_unsigned(dec_to_bin(registers[rs1] & registers[rs2]))
-    display(registers)
-
-def j_type(line,PC):
-    rd=line[20:25]
-    imm=bin_to_dec(line[0]+line[12:20]+line[11]+line[1:11]+"0")
-    registers[rd]=PC
-    # temp=PC
-    # registers[rd]=temp
-    # for i in memory:
-    #     if temp==0:
-    #         break
-    #     temp-=4
-    # registers[rd]=hex_to_dec(i)
-    PC+=imm
-    # for i in memory:
-    #     if PC==0:
-    #         break
-    #     PC-=1
-    display(registers)
+    PC += 4
     return PC
 
-def i_type(line):
+def j_type(line,PC):
+    #jal
+    rd=line[20:25]
+    imm=bin_to_dec(line[0]+line[12:20]+line[11]+line[1:11]+"0")
+    registers[rd]=PC+4
+    PC+=imm
+    return PC
+
+def i_type(line,PC,output_file):
     opcode=line[25:32]
-    #opcode2=instr[-7:]
-    #print(opcode) # Last 7 bits (6:0)
     rd=line[20:25] # Bits (11:7)
     func3=line[17:20] # Bits (14:12)
     rs1=line[12:17]       # Bits (19:15)
     imm=line[0:12]
     imm=sign_extend_to_32(imm)
     decimm=bin_to_dec(imm)
-    #print(opcode)
-    #update registers
+    #addi
     if func3=="000" and opcode=="0010011":
         #PC=PC+4
         ans=registers[rs1]+decimm
         ans=dec_to_bin(ans)
         registers[rd]=bin_to_dec_unsigned(ans)
+        PC += 4
+    #lw
     elif func3=="010" and opcode=="0000011":
         #PC=PC+4
         ans=registers[rs1]+decimm
         ans= format(ans, '#010x').lower()
         registers[rd]=memory.get(ans, 0)
+        PC += 4
+    #jalr
     elif opcode=="1100111":
-        pass
-    display(registers)
+        rd=line[20:25]
+        if rd!="00000":registers[rd]=PC+4
+        PC=registers[rs1]+decimm
+    return PC
 
-def s_type(line):
-    opcode = line[25:32]
-    func3 = line[17:20]
+def s_type(line,PC,output_file):
     rs1 = line[12:17]
     rs2 = line[7:12]
     imm = line[0:7] + line[20:25]
     imm = sign_extend_to_32(imm)
     decimm = bin_to_dec(imm)
+    #sw
+    address_dec= registers[rs1] + decimm
+    final_address= f"0x{(address_dec):08x}"
+    # if final_address in memory:
+    memory[final_address] = registers[rs2]
+    PC += 4
+    return PC
+    # else:
+    #     print(final_address)
+    #     print("invalid memory location")
+    #     return -1
 
-    if opcode == "0100011" and func3 =="010":  # sw instruction
-        address_dec= registers[rs1] + decimm
-        final_address= f"0x{(address_dec):08x}"
-        if int(final_address[-2])>7:
-            final_address=final_address[:-2]+str(int(final_address[-2])%8)+final_address[-1]
-        memory[final_address] = registers[rs2]
-    display(registers)
-
-def b_type(line,PC):
+def b_type(line,PC,output_file):
     func=line[17:20]
     rs1=line[12:17]
     rs2=line[7:12]
@@ -213,54 +205,66 @@ def b_type(line,PC):
     #beq
     if func=="000" and registers[rs1]==registers[rs2]:
         PC+=imm
-        PC-=4
-        print(PC,end=" ")
     #bne
     elif func=="001" and registers[rs1]!=registers[rs2]:
         PC+=imm
-        PC-=4
-        print(PC,end=" ")
     else:
-        print(PC,end=" ")
-    PC+=4
-    display(registers)
+        PC+=4
+    
     return PC
 
-def display(registers):
-    for key in registers:
-        print(registers[key], end=" ")
-    print()
+def writepc(PC,output_file):
+    with open(output_file,"a") as f:
+        f.write(str(PC))
+        f.write(" ")
+    return
+
+def writepcbin(PC,output_file):
+    with open(output_file,"a") as f:
+        f.write("0b")
+        f.write(sign_extend_to_32(dec_to_bin((PC))))
+        f.write(" ")
+    return
+
+def displaybin(PC,registers,output_file):
+    with open(output_file,"a") as f:
+        writepcbin(PC,output_file)
+        for key in registers:
+            f.write("0b")
+            f.write(str(sign_extend_to_32(dec_to_bin(registers[key]))))
+            f.write(" ")
+        f.write("\n")
 
 def main():
-    input_file="input.txt"
+    input_file=sys.argv[1]
+    output_file=sys.argv[2]
     lines=file_read(input_file)
-    PC=4
-    flag=0
-    while(lines[(PC//4)-1]!="00000000000000000000000001100011"):
-        line=lines[(PC//4)-1]
-        if line[25:]!="1100011":
-            print(PC,end=" ")
-        line=lines[(PC//4)-1]
-        if line[25:]=="0110011":
-            r_type(line)
-            PC+=4
-        if line[25:]=="1101111":
-            temp=PC+4
-            PC=j_type(line,PC)
-            flag=1
-        if line[25:]=="0010011" or line[25:]=="1100111" or line[25:]=="0000011":
-            i_type(line)
-            PC+=4
-        if line[25:]=="0100011":
-            s_type(line)
-            PC+=4
-        if line[25:]=="1100011":
-            PC=b_type(line,PC)
-        if flag==1:
-            flag=0
-            PC=temp
-    print(PC-4,end=" ")
-    display(registers)
-    for i in memory:
-        print(i,":",memory[i])
+    PC=0
+    # flag=0
+    with open(output_file,"w") as f:
+        f.write("")
+    with open(output_file,"a") as f:
+        while(lines[(PC//4)]!="00000000000000000000000001100011"):
+            line=lines[(PC//4)]
+            if line[25:]=="0110011":
+                PC = r_type(line,PC,output_file)
+            if line[25:]=="1101111":
+                PC=j_type(line,PC)
+            if line[25:]=="0010011" or line[25:]=="1100111" or line[25:]=="0000011":
+                PC = i_type(line,PC,output_file)
+            if line[25:]=="0100011":
+                PC = s_type(line,PC,output_file)
+                if PC==-1:
+                    break
+            if line[25:]=="1100011":
+                PC=b_type(line,PC,output_file)
+            displaybin(PC,registers,output_file)
+        displaybin(PC,registers,output_file)
+        for i in memory:
+            if int(i,16) >= 65536 :
+                f.write(i)
+                f.write(":")
+                f.write("0b")
+                f.write(sign_extend_to_32(dec_to_bin(memory[i])))
+                f.write("\n")
 main()
